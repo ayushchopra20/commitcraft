@@ -143,18 +143,28 @@ export function activate(context: vscode.ExtensionContext) {
           const model = genAI.getGenerativeModel({ model: modelName });
 
           const prompt = [
-            "You are a software engineer generating a commit message.",
-            "Use imperative tone and output a SINGLE line.",
-            `Keep the message under ${maxChars} characters.`,
-            "Prefer Conventional Commits style.",
+            "You are an expert software engineer writing precise Git commit messages.",
+            "Analyze the provided code diff and identify the primary user-visible change.",
+            "Ignore formatting-only edits or trivial refactors unless they are the main change.",
             "",
-            "Use these similar commits retrieved from the project history:",
+            "Write a SINGLE-LINE commit message that:",
+            "- Uses the imperative present tense (e.g., 'add', 'fix', 'remove').",
+            "- Follows the Conventional Commits format: <type>(<scope>): <summary>",
+            "- Types must be one of: feat, fix, refactor, perf, test, docs, chore, build,",
+            "- Scope should reference the affected component or file when possible.",
+            "- Summary must describe WHAT changed and WHY it matters.",
+            "- Avoid vague terms like 'update' or 'change'. Be specific.",
+            "",
+            `Limit the message to ${maxChars} characters.`,
+            "",
+            "Use consistent wording style matching these prior commits:",
             hardLimit(examplesSection, 60_000),
             "",
-            "New diff that needs a commit message:",
+            "New diff to summarize:",
             hardLimit(diff),
             "",
-            "Return ONLY the commit message line."
+            "Return ONLY the commit message text. No quotes. No explanations."
+
           ].join("\n");
 
           const resp = await model.generateContent(prompt);
@@ -163,6 +173,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 
         console.log("Generated commit message:", text);
+        console.log("Prompt:", prompt);
         console.log("Full response:", resp);
         console.log("Used model:", modelName);
         console.log("<<<<< CONFIG >>>>>");
