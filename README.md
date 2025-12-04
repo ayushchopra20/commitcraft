@@ -144,4 +144,3 @@ You can then install the `.vsix` in VS Code via `Extensions` panel → `...` →
 - Gemini errors: check API key and model selection.
 
 ---
-Created by [Aayush Chopra](https://github.com/ayushchopra20)
