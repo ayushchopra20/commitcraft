@@ -1,4 +1,4 @@
-# CommitCraft – VS Code Extension
+# CommitScribe – VS Code Extension
 
 Repository-aware commit messages using a RAG pipeline, sent to the Gemini API, directly from VS Code.
 
@@ -39,8 +39,8 @@ npm install
 
 ### Configure Gemini
 - In VS Code settings:
-	- `CommitCraft: Gemini API Key`: set your key
-	- `CommitCraft: Model`: choose `gemini-1.5-flash` or `gemini-1.5-pro`
+	- `CommitScribe: Gemini API Key`: set your key
+	- `CommitScribe: Model`: choose `gemini-1.5-flash` or `gemini-1.5-pro`
 
 ## RAG Workflow
 1) Prepare corpus
@@ -70,7 +70,7 @@ python rag/query_rag.py "Refactor parser to handle edge cases"
 npm run compile
 ```
 - Press `F5` (Run Extension) to open a new Extension Development Host.
-- In the Dev Host, open a repo, stage changes, then run `CommitCraft: Generate Commit Message`.
+-- In the Dev Host, open a repo, stage changes, then run `CommitScribe: Generate Commit Message`.
 
 ### Watch build
 Use the provided tasks to continuously build TypeScript and bundle:

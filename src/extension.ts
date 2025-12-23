@@ -51,20 +51,20 @@ function getRepo(api: any): any | undefined {
   return selected || api.repositories[0];
 }
 
-function hardLimit(text: string, max = 180_000) {
+function hardLimit(text: string, max = 80_000) {
   // Gemini 1.5 can take long prompts, but we keep a generous cap to avoid timeouts.
   return text.length > max ? text.slice(0, max) : text;
 }
 
 async function getGeminiApiKey(): Promise<string | undefined> {
   const cfg = vscode.workspace.getConfiguration();
-  const fromSettings = cfg.get<string>("commitcraft.geminiApiKey");
+  const fromSettings = cfg.get<string>("commitscribe.geminiApiKey");
   return (fromSettings && fromSettings.trim()) || process.env.GEMINI_API_KEY;
 }
 
 export function activate(context: vscode.ExtensionContext) {
   const cmd = vscode.commands.registerCommand(
-    "commitcraft.generateCommit",
+    "commitscribe.generateCommit",
     async () => {
       try {
         // 1) Access VS Code Git API
@@ -72,7 +72,7 @@ export function activate(context: vscode.ExtensionContext) {
         const api = gitExt?.getAPI(1);
         const repo = getRepo(api);
         if (!repo) {
-          vscode.window.showErrorMessage("CommitCraft: No Git repository found.");
+          vscode.window.showErrorMessage("CommitScribe: No Git repository found.");
           return;
         }
 
@@ -84,7 +84,7 @@ export function activate(context: vscode.ExtensionContext) {
         });
         if (!diff.trim()) {
           vscode.window.showWarningMessage(
-            "CommitCraft: No staged changes found."
+            "CommitScribe: No staged changes found."
           );
           return;
         }
@@ -93,18 +93,18 @@ export function activate(context: vscode.ExtensionContext) {
         const apiKey = await getGeminiApiKey();
         if (!apiKey) {
           vscode.window.showErrorMessage(
-            "CommitCraft: Gemini API key missing. Set Settings → CommitCraft → Gemini Api Key or define GEMINI_API_KEY."
+            "CommitScribe: Gemini API key missing. Set Settings → CommitScribe → Gemini Api Key or define GEMINI_API_KEY."
           );
           return;
         }
         const cfg = vscode.workspace.getConfiguration();
         const modelName =
-          cfg.get<string>("commitcraft.model") || "gemini-2.5-flash";
-        const maxChars = cfg.get<number>("commitcraft.maxChars") || 100;
+          cfg.get<string>("commitscribe.model") || "gemini-2.5-flash";
+        const maxChars = cfg.get<number>("commitscribe.maxChars") || 100;
 
         
         // -------------------- RAG Retrieval --------------------
-          vscode.window.setStatusBarMessage("$(sync) CommitCraft: retrieving similar commits…", 3000);
+          vscode.window.setStatusBarMessage("$(sync) CommitScribe: retrieving similar commits…", 3000);
 
           let examplesSection = "";
           let usedRAG = false;
@@ -122,7 +122,7 @@ export function activate(context: vscode.ExtensionContext) {
             console.log("Used examplesSection:", examplesSection);
 
           } catch (ragErr) {
-            console.warn("CommitCraft RAG lookup failed:", ragErr);
+            console.warn("CommitScribe RAG lookup failed:", ragErr);
           }
 
           // If RAG failed: use template fallback
@@ -130,14 +130,14 @@ export function activate(context: vscode.ExtensionContext) {
             const template = generateTemplateCommit(diff);
             repo.inputBox.value = template;
             vscode.window.showWarningMessage(
-              `CommitCraft: RAG unavailable. Applied template commit message: "${template}".`
+              `CommitScribe: RAG unavailable. Applied template commit message: "${template}".`
             );
             return;
           }
           // ----------------------------------------------------------
         
           // -------------------- AI GENERATION --------------------
-          vscode.window.setStatusBarMessage("$(sync) CommitCraft: generating commit message…", 3000);
+          vscode.window.setStatusBarMessage("$(sync) CommitScribe: generating commit message…", 3000);
 
           const genAI = new GoogleGenerativeAI(apiKey);
           const model = genAI.getGenerativeModel({ model: modelName });
@@ -158,7 +158,7 @@ export function activate(context: vscode.ExtensionContext) {
             `Limit the message to ${maxChars} characters.`,
             "",
             "Use consistent wording style matching these prior commits:",
-            hardLimit(examplesSection, 60_000),
+            hardLimit(examplesSection, 10_000),
             "",
             "New diff to summarize:",
             hardLimit(diff),
@@ -181,7 +181,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         if (!text) {
           vscode.window.showErrorMessage(
-            "CommitCraft: No message returned from Gemini."
+            "CommitScribe: No message returned from Gemini."
           );
           return;
         }
@@ -189,13 +189,13 @@ export function activate(context: vscode.ExtensionContext) {
         // 6) Insert into the built-in Source Control commit box
         repo.inputBox.value = text;
         vscode.window.showInformationMessage(
-          "CommitCraft: commit message generated with RAG and inserted."
+          "CommitScribe: commit message generated with RAG and inserted."
         );
-      } catch (err: any) {
+        } catch (err: any) {
         const msg =
           err?.response?.status
-            ? `CommitCraft error (${err.response.status}): ${err.response.statusText}`
-            : `CommitCraft error: ${err?.message || String(err)}`;
+            ? `CommitScribe error (${err.response.status}): ${err.response.statusText}`
+            : `CommitScribe error: ${err?.message || String(err)}`;
         vscode.window.showErrorMessage(msg);
       }
     }
